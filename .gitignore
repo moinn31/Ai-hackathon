@@ -13,6 +13,3 @@ venv/
 # ── OS ──
 Thumbs.db
 .DS_Store
-
-# ── Phase 2 (will be pushed later) ──
-app.py
