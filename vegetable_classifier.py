@@ -237,7 +237,7 @@ axes[1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "training_curves.png"), dpi=150)
-plt.show()
+# plt.show()  # commented out to prevent terminal blocking
 print("[SAVED] Training curves saved to training_curves.png")
 
 # --- 9b. Confusion Matrix Heatmap ---
@@ -255,7 +255,7 @@ plt.xlabel("Predicted Label")
 plt.ylabel("True Label")
 plt.tight_layout()
 plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "confusion_matrix.png"), dpi=150)
-plt.show()
+# plt.show()  # commented out to prevent terminal blocking
 print("[SAVED] Confusion matrix saved to confusion_matrix.png\n")
 
 # ──────────────────────────────────────────────
