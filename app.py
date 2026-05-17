@@ -345,12 +345,4 @@ else:
     )
 
 
-# ──────────────────────────────────────────────
-# FOOTER
-# ──────────────────────────────────────────────
-st.markdown("---")
-st.markdown("""
-<div class="footer">
-    Built for Hackathon \U0001F680 &nbsp;|&nbsp; Powered by MobileNetV2 + Streamlit
-</div>
-""", unsafe_allow_html=True)
+

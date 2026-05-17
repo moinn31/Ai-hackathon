@@ -81,8 +81,4 @@ During the Phase 1 training checkpoint (15 epochs), the model demonstrated robus
 - `peas`: **0.83**
 - `pointed_gourd`: **0.71**
 
----
 
-<div align="center">
-  <b>Built for Hackathon 🚀 | Powered by MobileNetV2 + Streamlit</b>
-</div>
