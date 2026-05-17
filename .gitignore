@@ -1,0 +1,18 @@
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# ── IDE ──
+.vscode/
+.idea/
+
+# ── OS ──
+Thumbs.db
+.DS_Store
+
+# ── Phase 2 (will be pushed later) ──
+app.py
