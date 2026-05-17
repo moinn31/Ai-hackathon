@@ -22,7 +22,7 @@ from keras.preprocessing.image import img_to_array
 # ──────────────────────────────────────────────
 # CONFIGURATION
 # ──────────────────────────────────────────────
-MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vegetable_classifier.h5")
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vegetable_classifier.keras")
 IMG_SIZE = (224, 224)
 
 # Internal class labels (must match training order exactly)

@@ -39,7 +39,7 @@ BATCH_SIZE = 16
 EPOCHS = 15
 NUM_CLASSES = 5
 LEARNING_RATE = 1e-4
-MODEL_SAVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vegetable_classifier.h5")
+MODEL_SAVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vegetable_classifier.keras")
 
 CLASS_NAMES = [
     "green_chilli",
