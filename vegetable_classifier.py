@@ -18,12 +18,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+from keras.applications import MobileNetV2
+from keras.models import Model, load_model
+from keras.layers import Dense, Dropout, GlobalAveragePooling2D
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from sklearn.metrics import confusion_matrix, classification_report
 
