@@ -18,7 +18,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import tensorflow as tf
-from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import load_img, img_to_array
 from keras.applications import MobileNetV2
 from keras.models import Model, load_model
 from keras.layers import Dense, Dropout, GlobalAveragePooling2D
