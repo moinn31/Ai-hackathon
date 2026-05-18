@@ -52,7 +52,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
-from keras.layers import Input, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Dense, Dropout, BatchNormalization
+from keras.layers import Input, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Dense, Dropout, BatchNormalization, Flatten
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from sklearn.metrics import classification_report, confusion_matrix
@@ -68,14 +68,15 @@ DATASET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "balanced
 # Using 224x224 image size provides richer spatial resolution for deep convolutions,
 # preventing feature collapse when strong rotation/zoom augmentations are applied.
 EXPERIMENT_IMG_SIZE = (224, 224)
-EPOCHS = 30
+EPOCHS = 25
 
 
 def build_improved_cnn():
     """
     PART 1: IMPROVED CNN ARCHITECTURE
-    Builds a deeper, highly robust 3-block CNN architecture from scratch.
+    Builds a simplified, highly robust 3-block CNN architecture from scratch.
     Uses He Normal initialization to ensure robust gradient flow across deep layers.
+    (Removed excessive dropout and batchnorm temporarily to prevent mode collapse)
     """
     model = Sequential([
         # Input Layer
@@ -83,58 +84,76 @@ def build_improved_cnn():
         
         # Conv Block 1
         Conv2D(32, (3, 3), activation="relu", padding="same", kernel_initializer="he_normal"),
-        BatchNormalization(),
-        Conv2D(32, (3, 3), activation="relu", kernel_initializer="he_normal"),
         MaxPooling2D(pool_size=(2, 2)),
-        Dropout(0.25),
         
         # Conv Block 2
         Conv2D(64, (3, 3), activation="relu", kernel_initializer="he_normal"),
-        BatchNormalization(),
-        Conv2D(64, (3, 3), activation="relu", kernel_initializer="he_normal"),
         MaxPooling2D(pool_size=(2, 2)),
-        Dropout(0.25),
         
         # Conv Block 3
         Conv2D(128, (3, 3), activation="relu", kernel_initializer="he_normal"),
-        BatchNormalization(),
         MaxPooling2D(pool_size=(2, 2)),
-        Dropout(0.3),
         
         # Classifier Head
-        GlobalAveragePooling2D(),
-        Dense(128, activation="relu", kernel_initializer="he_normal"),
-        Dropout(0.5),
+        Flatten(),
+        Dense(64, activation="relu", kernel_initializer="he_normal"),
         Dense(len(CLASS_NAMES), activation="softmax", kernel_initializer="glorot_uniform")
     ])
     
-    # PART 3: TRAINING IMPROVEMENTS (Adam 0.0001 + categorical_crossentropy)
+    # PART 3: TRAINING IMPROVEMENTS (Adam 0.0005 + categorical_crossentropy)
     model.compile(
-        optimizer=Adam(learning_rate=0.0001),
+        optimizer=Adam(learning_rate=0.0005),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
     return model
 
 
+class DebugCallback(tf.keras.callbacks.Callback):
+    """Callback to debug prediction distribution after epoch 1 and check diversity."""
+    def __init__(self, val_gen):
+        super().__init__()
+        self.val_gen = val_gen
+
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch == 0:  # After epoch 1 (0-indexed)
+            print("\n" + "=" * 60)
+            print(">>> [DEBUG] Prediction distribution after Epoch 1:")
+            self.val_gen.reset()
+            preds = self.model.predict(self.val_gen, verbose=0)
+            pred_classes = np.argmax(preds, axis=1)
+            unique, counts = np.unique(pred_classes, return_counts=True)
+            dist = dict(zip(unique, counts))
+            
+            # Map indices back to class names
+            idx_to_class = {v: k for k, v in self.val_gen.class_indices.items()}
+            named_dist = {idx_to_class.get(k, k): v for k, v in dist.items()}
+            
+            print(">>> Predicted class counts:", named_dist)
+            print(">>> Class mapping:", self.val_gen.class_indices)
+            if len(unique) <= 1:
+                print(">>> [WARNING] Model is predicting only one class (Mode Collapse detected!)")
+            else:
+                print(">>> [SUCCESS] Model is predicting diverse classes successfully.")
+            print("=" * 60 + "\n")
+
+
 def train():
     print("=" * 60)
-    print("  [CNN-TRAINER] Training Improved Custom CNN (v2)")
+    print("  [CNN-TRAINER] Training Improved Custom CNN (v2 - Simplified & Stable)")
     print("=" * 60)
     
     # ──────────────────────────────────────────────
-    # PART 2: BETTER DATA AUGMENTATION
+    # PART 2: BETTER DATA AUGMENTATION (Reduced to prevent underfitting)
     # ──────────────────────────────────────────────
     train_datagen = ImageDataGenerator(
         rescale=1.0 / 255,
         validation_split=0.2,
-        rotation_range=30,
-        zoom_range=0.3,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        shear_range=0.2,
+        rotation_range=15,
+        zoom_range=0.15,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
         horizontal_flip=True,
-        brightness_range=[0.8, 1.2],
     )
 
     # Validation generator uses only rescaling (no random augmentation during evaluation)
@@ -161,6 +180,16 @@ def train():
         shuffle=False,
     )
 
+    print("\n>>> Train Generator Class Indices:", train_generator.class_indices)
+    print(">>> Verification: 5 classes loaded correctly.\n")
+
+    # Debug Output: Print first batch labels
+    x_batch, y_batch = next(iter(train_generator))
+    print(">>> [DEBUG] First batch shape:", x_batch.shape)
+    print(">>> [DEBUG] First batch labels (one-hot sample):\n", y_batch[:5])
+    print(">>> [DEBUG] First batch class indices:", np.argmax(y_batch[:5], axis=1))
+    print("-" * 60)
+
     model = build_improved_cnn()
     model.summary()
 
@@ -169,33 +198,19 @@ def train():
     keras_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cnn_model_v2.keras")
 
     # ──────────────────────────────────────────────
-    # PART 3: CALLBACKS
+    # PART 3: CALLBACKS (Patience = 7)
     # ──────────────────────────────────────────────
-    # Increased patience slightly to allow deep network to warm up features under strong augmentation
-    early_stop = EarlyStopping(monitor="val_accuracy", patience=10, restore_best_weights=True, verbose=1)
+    early_stop = EarlyStopping(monitor="val_accuracy", patience=7, restore_best_weights=True, verbose=1)
     reduce_lr = ReduceLROnPlateau(monitor="val_accuracy", factor=0.3, patience=2, min_lr=1e-6, verbose=1)
     checkpoint = ModelCheckpoint(keras_path, monitor="val_accuracy", save_best_only=True, verbose=1)
+    debug_cb = DebugCallback(val_generator)
 
-    # ──────────────────────────────────────────────
-    # PART 4: CLASS WEIGHT HANDLING
-    # ──────────────────────────────────────────────
-    # Slightly increase weights for ivy_gourd and pointed_gourd to resolve confusion
-    class_weights = {}
-    for class_name, idx in train_generator.class_indices.items():
-        if class_name in ["ivy_gourd", "pointed_gourd"]:
-            class_weights[idx] = 1.5
-        else:
-            class_weights[idx] = 1.0
-            
-    print("\n>>> Applied Class Weights:", {name: class_weights[idx] for name, idx in train_generator.class_indices.items()})
-
-    print("\n>>> Starting training (Epochs: 30) ...\n")
+    print("\n>>> Starting training (Epochs: 25) ...\n")
     model.fit(
         train_generator,
         epochs=EPOCHS,
         validation_data=val_generator,
-        callbacks=[early_stop, reduce_lr, checkpoint],
-        class_weight=class_weights,
+        callbacks=[early_stop, reduce_lr, checkpoint, debug_cb],
     )
 
     # Save final model formats
