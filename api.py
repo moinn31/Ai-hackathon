@@ -46,12 +46,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Define paths (prefer modern .keras, fallback to .h5 if needed)
 MODEL_PATHS = {
     "mobilenet": os.path.join(BASE_DIR, "vegetable_classifier.keras"),
-    "cnn":       os.path.join(BASE_DIR, "cnn_model.keras"),
+    "cnn":       os.path.join(BASE_DIR, "cnn_model_v2.keras"),
 }
 # Fallback paths if .keras is missing but .h5 exists
 FALLBACK_PATHS = {
     "mobilenet": os.path.join(BASE_DIR, "vegetable_classifier.h5"),
-    "cnn":       os.path.join(BASE_DIR, "cnn_model.h5"),
+    "cnn":       os.path.join(BASE_DIR, "cnn_model_v2.h5"),
 }
 
 # In-memory dictionary to store loaded Keras models so they aren't reloaded per request
